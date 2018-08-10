@@ -1,0 +1,17 @@
+import { types } from 'mobx-state-tree';
+import Timestamp from './Timestamp.model';
+
+export default types.late(() =>
+  types.model('{{properCase name}}', {
+    id: types.identifierNumber,
+    createdAt: Timestamp,
+    updatedAt: types.maybeNull(Timestamp),
+    deletedAt: types.maybeNull(Timestamp),
+  })    
+  .views(self => ({
+
+  }))
+  .actions(self => ({
+
+  }))
+);

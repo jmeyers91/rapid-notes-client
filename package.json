@@ -95,5 +95,8 @@
   },
   "eslintConfig": {
     "extends": "react-app"
+  },
+  "devDependencies": {
+    "plop": "^2.1.0"
   }
 }
