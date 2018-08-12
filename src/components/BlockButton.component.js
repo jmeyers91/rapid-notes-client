@@ -11,4 +11,5 @@ export default styled.button`
   background-color: ${props => props.color || '#555555'};
   padding: 0 20px 0 20px;
   text-decoration: none;
+  cursor: pointer;
 `;

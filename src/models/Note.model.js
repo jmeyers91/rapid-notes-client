@@ -1,4 +1,4 @@
-import { types, getRoot, getParent } from 'mobx-state-tree';
+import { types, getRoot } from 'mobx-state-tree';
 import createTextDiff from 'textdiff-create';
 import User from './User.model';
 
@@ -12,10 +12,13 @@ export default types.late(() =>
     updatedAt: types.maybe(types.Date),
     author: types.maybe(User),
     saving: false,
+    deleted: false,
   })
   .views(self => ({
     get axios() {
-      return getRoot(self).axios;
+      const root = getRoot(self);
+      if(root === self) return null;
+      return root.axios;
     },
 
     get routes() {
@@ -35,6 +38,10 @@ export default types.late(() =>
       if(content === savedContent || content == null || savedContent == null) return null;
       return createTextDiff(savedContent, content);
     },
+
+    get lowercaseTitle() {
+      return self.title.toLowerCase();
+    }
   }))
   .actions(self => ({
     set(props) {
@@ -42,9 +49,12 @@ export default types.late(() =>
     },
 
     async save() {
+      const { axios } = self;
+      if(!axios) return; // don't save detached notes
+
       try {
         self.set({saving: true});
-        await self.axios.post(`/note/${self.id}`, {
+        await axios.post(`/note/${self.id}`, {
           title: self.title,
           contentPatch: self.contentPatch,
         });
@@ -62,6 +72,10 @@ export default types.late(() =>
 
     updateContent(newContent) {
       self.content = newContent || '';
-    }
+    },
+
+    matchesSearch(search) {
+      return self.lowercaseTitle.includes(search);
+    },
   }))
 );

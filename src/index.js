@@ -1,5 +1,6 @@
-// import './reset.css';
+import './reset.css';
 import './index.css';
+import 'sweetalert2/dist/sweetalert2.css';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider as StoreProvider } from 'mobx-react';

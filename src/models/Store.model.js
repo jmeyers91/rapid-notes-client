@@ -1,8 +1,8 @@
-import { types } from 'mobx-state-tree';
+import { types, destroy } from 'mobx-state-tree';
 import Axios from 'axios';
 import config from '../config';
 import User from './User.model';
-import Note, { NoteStore } from './Note.model';
+import Note from './Note.model';
 
 export default types
   .model('Store', {
@@ -23,7 +23,7 @@ export default types
       if(authToken) headers.Authorization = authToken;
       
       return Axios.create({ baseURL, headers });
-    }
+    },
   }))
   .actions(self => ({
     async afterCreate() {
@@ -35,19 +35,6 @@ export default types
 
     set(fields) {
       Object.assign(self, fields);
-    },
-
-    async fetchUser() {
-      const response = await self.axios.get('/user');
-      const user = response.data.user;
-      const notes = response.data.user.notes;
-      self.set({user, notes});
-    },
-
-    async fetchNotes() {
-      const response = await self.axios.get('/notes');
-      const notes = response.data.notes;
-      this.set({notes});
     },
 
     async login({ username, password, remember }) {
@@ -67,5 +54,39 @@ export default types
         user: null,
         notes: null
       });
+    },
+
+    async fetchUser() {
+      const response = await self.axios.get('/user');
+      const user = response.data.user;
+      const notes = response.data.user.notes;
+      self.set({user, notes});
+    },
+
+    async fetchNotes() {
+      const response = await self.axios.get('/notes');
+      const { notes } = response.data;
+      this.set({notes});
+    },
+
+    async createNote() {
+      const response = await self.axios.post('/note');
+      const note = Note.create(response.data.note);
+      self.addNote(note);
+      return note;
+    },
+
+    async deleteNote(note) {
+      await self.axios.delete(`/note/${note.id}`);
+      self.removeNote(note);
+    },
+
+    removeNote(note) {
+      destroy(note);
+    },
+
+    addNote(note) {
+      // add to the beginning of the list to maintain creation date sort order
+      self.notes.unshift(note);
     },
   }));

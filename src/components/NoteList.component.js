@@ -32,7 +32,7 @@ class NoteList extends Component {
       <Root {...rest}>
         <StickyRow>{header}</StickyRow>
         <Notes>
-          <ReactList
+          <ObserverReactList
             itemRenderer={this.renderItem}
             length={notes.length}
             type="uniform"
@@ -53,11 +53,7 @@ const Root = Column.extend`
   flex-shrink: 0;
 `;
 
-const StickyRow = Row.extend`
-  // height: 100px;
-  height: 0;
-  background-color: rebeccapurple;
-`;
+const StickyRow = Row.extend``;
 
 const Notes = Column.extend`
   flex: 1;
@@ -76,3 +72,5 @@ const NoteListItem = Row.withComponent(NavLink).extend`
     background-color: #CCC;
   }
 `;
+
+const ObserverReactList = observer(ReactList);

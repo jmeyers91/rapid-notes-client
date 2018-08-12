@@ -6,6 +6,7 @@ import { action, computed } from 'mobx';
 import { observer, inject } from 'mobx-react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
+import swal from 'sweetalert2';
 import { Controlled as CodeMirror } from 'react-codemirror2';
 import debounce from 'lodash/debounce';
 import Column from './Column.component';
@@ -80,6 +81,23 @@ export default class EditNoteForm extends Component {
     this.debouncedSave();
   }
 
+  @action.bound
+  async handleDeleteClick(event) {
+    const { value : deleteConfirmed } = await swal({
+      title: 'Are you sure?',
+      text: 'This cannot be undone.',
+      type: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'No, keep it'
+    });
+
+    if(!deleteConfirmed) return;
+    
+    const { store, note } = this.props;
+    await store.deleteNote(note);
+  }
+
   async save() {
     await this.props.note.save();
   }
@@ -95,11 +113,13 @@ export default class EditNoteForm extends Component {
       <Root>
         <Header>
           <TitleInput value={note.title} onChange={this.handleTitleChange} innerRef={this.handleTitleRef}/>
-          {note && 
-            <ViewButton to={`/note/${note.id}`}>
-              VIEW
-            </ViewButton>
-          }
+
+          <DeleteButton color="#C00" onClick={this.handleDeleteClick}>
+            DELETE
+          </DeleteButton>
+          <ViewButton to={`/note/${note.id}`}>
+            VIEW
+          </ViewButton>
         </Header>
         <ContentContainer>
           {note.contentLoaded && 
@@ -173,3 +193,6 @@ const ViewButton = BlockButton.withComponent(Link).extend`
   flex-shrink: 0;
 `;
 
+const DeleteButton = BlockButton.extend`
+  flex-shrink: 0;
+`;
