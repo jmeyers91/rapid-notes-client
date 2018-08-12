@@ -63,9 +63,46 @@ export default class RenderedNote extends Component {
           <EditButton to={note.routes.edit}>EDIT</EditButton>
         </Header>
         <Content onDoubleClick={this.handleContentClick}>
-          <ReactMarkdown source={note.content} renderers={markdownRenderers}/>
+          <MarkdownRenderer source={note.content}/>
         </Content>
       </Root>
+    );
+  }
+}
+
+class MarkdownRenderer extends Component {
+  state = { windowWidth: window.innerWidth, windowHeight: window.innerHeight };
+
+  constructor(props) {
+    super(props);
+    this.handleResize = this.handleResize.bind(this);
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    // avoid potentially costly rerenders
+    return (
+      nextProps.source !== this.props.source ||
+      nextState.windowHeight !== this.state.windowHeight ||
+      nextState.windowWidth !== this.state.windowWidth
+    );
+  }
+
+  componentDidMount() {
+    window.addEventListener('resize', this.handleResize);
+  }
+
+  handleResize() {
+    this.setState({
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight,
+    });
+  }
+
+  render() {
+    const { source } = this.props;
+
+    return (
+      <ReactMarkdown source={source} renderers={markdownRenderers}/>
     );
   }
 }
@@ -73,7 +110,7 @@ export default class RenderedNote extends Component {
 const markdownRenderers = { code: codeWrapper };
 function codeWrapper({ language, value }) {
   return (
-    <Highlight languages={[language]} worker={highlightWorker()}>
+    <Highlight languages={language ? [language] : null} worker={highlightWorker()}>
       {value}
     </Highlight>
   );

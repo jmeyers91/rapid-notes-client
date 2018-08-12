@@ -23,7 +23,10 @@ export default class CreateNoteForm extends Component {
 
     if(note) {
       return (
-        <Redirect to={note.routes.edit}/>
+        <Redirect to={{
+          pathname: note.routes.edit,
+          state: {focus: 'title'}
+        }}/>
       );
     }
 

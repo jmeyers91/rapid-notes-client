@@ -17,6 +17,11 @@ import BlockButton from './BlockButton.component';
 @inject('store')
 @observer
 export default class EditNoteForm extends Component {
+  codeMirrorOptions = {
+    mode: 'gfm',
+    lineWrapping: true,
+  };
+
   handleContentRef = contentRef => {
     this.contentRef = contentRef
   };
@@ -95,6 +100,7 @@ export default class EditNoteForm extends Component {
     if(!deleteConfirmed) return;
     
     const { store, note } = this.props;
+    this.props.history.push('/notes');
     await store.deleteNote(note);
   }
 
@@ -123,14 +129,10 @@ export default class EditNoteForm extends Component {
         </Header>
         <ContentContainer>
           {note.contentLoaded && 
-            <ContentInput
-              selection={{focus: true}}
+            <ContentInput escapeHtml={true}
               innerRef={this.handleContentRef}
               value={note.content}
-              options={{
-                mode: 'gfm',
-                lineWrapping: true,
-              }}
+              options={this.codeMirrorOptions}
               onBeforeChange={this.handleContentChange}
             />
           }
@@ -174,7 +176,7 @@ const ContentInput = styled(CodeMirror)`
   align-items: stretch;
 
   .CodeMirror {
-    height: ${window.innerHeight - headerHeight}px;
+    height: calc(100vh - ${headerHeight}px);
     font-family: inherit;
     font-size: inherit;
     width: 100%;

@@ -48,7 +48,6 @@ export default styled(NoteList)``;
 
 const Root = Column.extend`
   height: 100%;
-  width: 400px;
   max-width: 100%;
   flex-shrink: 0;
 `;
