@@ -129,7 +129,7 @@ export default class EditNoteForm extends Component {
         </Header>
         <ContentContainer>
           {note.contentLoaded && 
-            <ContentInput escapeHtml={true}
+            <ContentInput
               innerRef={this.handleContentRef}
               value={note.content}
               options={this.codeMirrorOptions}
