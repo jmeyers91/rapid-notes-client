@@ -1,5 +1,5 @@
 module.exports = plop => {
-  plop.setGenerator('Component (Styled)', {
+  plop.setGenerator('styled component', {
 		description: 'Create a styled component',
 		prompts: [{
 			type: 'input',
@@ -13,7 +13,7 @@ module.exports = plop => {
 		}],
   });
 
-  plop.setGenerator('Component (Function)', {
+  plop.setGenerator('function component', {
 		description: 'Create a stateless React component',
 		prompts: [{
 			type: 'input',
@@ -27,7 +27,7 @@ module.exports = plop => {
 		}],
   });
 
-	plop.setGenerator('Component (Class)', {
+	plop.setGenerator('component', {
 		description: 'Create a stateful React component',
 		prompts: [{
 			type: 'input',
@@ -41,7 +41,7 @@ module.exports = plop => {
 		}],
 	});
 
-	plop.setGenerator('Screen', {
+	plop.setGenerator('screen', {
 		description: 'Create a screen component',
 		prompts: [{
 			type: 'input',
@@ -55,7 +55,7 @@ module.exports = plop => {
 		}],
 	});
 
-	plop.setGenerator('Model', {
+	plop.setGenerator('model', {
 		description: 'Create a mobx-state-tree model',
 		prompts: [{
 			type: 'input',
