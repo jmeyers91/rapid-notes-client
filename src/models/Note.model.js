@@ -1,5 +1,6 @@
 import { types, getRoot } from 'mobx-state-tree';
 import createTextDiff from 'textdiff-create';
+import Notebook from './Notebook.model';
 import User from './User.model';
 
 export default types.late(() => 
@@ -10,11 +11,16 @@ export default types.late(() =>
     savedContent: types.maybe(types.string),
     content: types.maybe(types.string),
     updatedAt: types.maybe(types.Date),
-    author: types.maybe(User),
     saving: false,
     deleted: false,
+    notebookId: types.maybeNull(types.reference(Notebook)),
+    authorId: types.reference(User),
   })
   .views(self => ({
+    get author() {
+      return self.authorId;
+    },
+
     get axios() {
       const root = getRoot(self);
       if(root === self) return null;
@@ -41,6 +47,10 @@ export default types.late(() =>
 
     get lowercaseTitle() {
       return self.title.toLowerCase();
+    },
+
+    get notebook() {
+      return self.notebookId;
     }
   }))
   .actions(self => ({
@@ -67,6 +77,7 @@ export default types.late(() =>
     async fetchContent() {
       const response = await self.axios.get(`/note/${self.id}/content`);
       const { content } = response.data;
+      console.log({content});
       self.set({ content, savedContent: content });
     },
 

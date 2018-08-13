@@ -1,12 +1,12 @@
 import { types } from 'mobx-state-tree';
-import Note from './Note.model';
+import User from './User.model';
 
 export default types.late(() =>
-  types.model('User', {
+  types.model('Notebook', {
     id: types.identifierNumber,
+    name: types.string,
+    ownerId: types.reference(User),
     createdAt: types.Date,
     updatedAt: types.maybeNull(types.Date),
-    email: types.string,
-    notes: types.maybe(types.array(Note))
   })
-)
+);

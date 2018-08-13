@@ -3,13 +3,15 @@ import Axios from 'axios';
 import config from '../config';
 import User from './User.model';
 import Note from './Note.model';
+import Notebook from './Notebook.model';
 
 export default types
   .model('Store', {
     loadingInitial: true,
     authToken: types.maybeNull(types.string),
     user: types.maybe(User),
-    notes: types.maybe(types.array(Note))
+    notes: types.maybe(types.array(Note)),
+    notebooks: types.maybe(types.array(Notebook)),
   })
   .views(self => ({
     get loggedIn() {
@@ -59,6 +61,8 @@ export default types
     async fetchUser() {
       const response = await self.axios.get('/user');
       const user = response.data.user;
+      const notebooks = response.data.user.notebooks;
+      self.set({notebooks});
       const notes = response.data.user.notes;
       self.set({user, notes});
     },

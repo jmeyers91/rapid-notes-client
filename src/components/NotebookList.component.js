@@ -1,53 +1,56 @@
 import React, { Component } from 'react';
 import { observer } from 'mobx-react';
-import { NavLink, withRouter } from 'react-router-dom';
+import { Link, withRouter } from 'react-router-dom';
 import styled from 'styled-components';
 import ReactList from 'react-list';
 import Column from './Column.component';
 import Row from './Row.component';
+import withQuery from '../utils/withQuery';
 
 @withRouter
+@withQuery
 @observer
-class NoteList extends Component {
+class NotebookList extends Component {
   constructor(props) {
     super(props);
     this.renderItem = this.renderItem.bind(this);
   }
 
   renderItem(index, key) {
-    const { notes, location } = this.props;
-    const note = notes[index];
+    const { query } = this.props;
+    const { location, notebooks } = this.props;
+    const notebook = notebooks[index];
+    const active = query.notebookId && ((+query.notebookId) === notebook.id);
 
     return (
-      <NoteListItem key={key} to={{
-        pathname: `/note/${note.id}`,
-        search: location.search
-      }} activeClassName="active">
-        {note.title}
-      </NoteListItem>
+      <NotebookListItem key={key} className={active ? 'active' : null}     to={{
+        pathname: location.pathname,
+        search: `?notebookId=${notebook.id}`
+      }}>
+        {notebook.name}
+      </NotebookListItem>
     );
   }
 
   render() {
-    const { notes, header, footer, ...rest } = this.props;
-
+    const { notebooks, header, footer, query, ...rest } = this.props;
     return (
       <Root {...rest}>
         <StickyRow>{header}</StickyRow>
-        <Notes>
+        <Notebooks>
           <ObserverReactList
             itemRenderer={this.renderItem}
-            length={notes.length}
+            length={notebooks.length}
             type="uniform"
           />
-        </Notes>
+        </Notebooks>
         <StickyRow>{footer}</StickyRow>
       </Root>
     );
   }
 }
 
-export default styled(NoteList)``;
+export default styled(NotebookList)``;
 
 const Root = Column.extend`
   height: 100%;
@@ -57,12 +60,12 @@ const Root = Column.extend`
 
 const StickyRow = Row.extend``;
 
-const Notes = Column.extend`
+const Notebooks = Column.extend`
   flex: 1;
   overflow: auto;
 `;
 
-const NoteListItem = Row.withComponent(NavLink).extend`
+const NotebookListItem = Row.withComponent(Link).extend`
   height: 100px;
   border-bottom: 1px solid #AAA;
   padding: 20px;

@@ -71,38 +71,18 @@ export default class RenderedNote extends Component {
 }
 
 class MarkdownRenderer extends Component {
-  state = { windowWidth: window.innerWidth, windowHeight: window.innerHeight };
-
-  constructor(props) {
-    super(props);
-    this.handleResize = this.handleResize.bind(this);
-  }
-
   shouldComponentUpdate(nextProps, nextState) {
     // avoid potentially costly rerenders
     return (
-      nextProps.source !== this.props.source ||
-      nextState.windowHeight !== this.state.windowHeight ||
-      nextState.windowWidth !== this.state.windowWidth
+      nextProps.source !== this.props.source
     );
-  }
-
-  componentDidMount() {
-    window.addEventListener('resize', this.handleResize);
-  }
-
-  handleResize() {
-    this.setState({
-      windowWidth: window.innerWidth,
-      windowHeight: window.innerHeight,
-    });
   }
 
   render() {
     const { source } = this.props;
-
+    const transformedSource = source ? source.replace(/\t/g, '  ') : source;
     return (
-      <ReactMarkdown source={source} renderers={markdownRenderers}/>
+      <ReactMarkdown source={transformedSource} renderers={markdownRenderers} ref={this.handleRef}/>
     );
   }
 }
