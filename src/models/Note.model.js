@@ -2,6 +2,11 @@ import { types, getRoot } from 'mobx-state-tree';
 import createTextDiff from 'textdiff-create';
 import Notebook from './Notebook.model';
 import User from './User.model';
+import DiffMatchPatch from 'diff-match-patch';
+
+const diffMatchPatch = new DiffMatchPatch();
+
+let saveQueue = Promise.resolve();
 
 export default types.late(() => 
   types.model('Note', {
@@ -11,10 +16,10 @@ export default types.late(() =>
     savedContent: types.maybe(types.string),
     content: types.maybe(types.string),
     updatedAt: types.maybe(types.Date),
-    saving: false,
-    deleted: false,
     notebookId: types.maybeNull(types.reference(Notebook)),
     authorId: types.reference(User),
+    saving: false,
+    deleted: false,
   })
   .views(self => ({
     get author() {
@@ -42,7 +47,8 @@ export default types.late(() =>
     get contentPatch() {
       const { content, savedContent } = this;
       if(content === savedContent || content == null || savedContent == null) return null;
-      return createTextDiff(savedContent, content);
+      
+      return createContentPatch(savedContent, content);
     },
 
     get lowercaseTitle() {
@@ -58,7 +64,7 @@ export default types.late(() =>
       Object.assign(self, props);
     },
 
-    async save() {
+    async forceSave() {
       const { axios } = self;
       if(!axios) return; // don't save detached notes
 
@@ -67,11 +73,20 @@ export default types.late(() =>
         await axios.post(`/note/${self.id}`, {
           title: self.title,
           contentPatch: self.contentPatch,
+          content: self.content
         });
         self.set({savedContent: self.content});
       } finally {
         self.set({saving: false});
       }
+    },
+
+    save() {
+      saveQueue = saveQueue
+        .then(() => self.forceSave())
+        .catch(error => console.log('Failed to save', error));
+      
+        return saveQueue;
     },
 
     async fetchContent() {
@@ -90,3 +105,9 @@ export default types.late(() =>
     },
   }))
 );
+
+function createContentPatch(oldText, newText) {
+  const diffs = diffMatchPatch.diff_main(oldText, newText);
+  diffMatchPatch.diff_cleanupEfficiency(diffs);
+  return diffMatchPatch.patch_make(diffs);
+}
