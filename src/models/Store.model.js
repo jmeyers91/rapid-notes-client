@@ -62,9 +62,8 @@ export default types
       const response = await self.axios.get('/user');
       const user = response.data.user;
       const notebooks = response.data.user.notebooks;
-      self.set({notebooks});
       const notes = response.data.user.notes;
-      self.set({user, notes});
+      self.set({user, notes, notebooks});
     },
 
     async fetchNotes() {

@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { observable, action } from 'mobx';
 import { observer, inject } from 'mobx-react';
 import { Redirect } from 'react-router-dom';
+import SpinnerFill from '../components/SpinnerFill.component';
 
 @inject('store')
 @observer
@@ -30,6 +31,6 @@ export default class CreateNoteForm extends Component {
       );
     }
 
-    return null;
+    return (<SpinnerFill/>);
   }
 }

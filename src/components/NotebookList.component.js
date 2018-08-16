@@ -20,12 +20,12 @@ class NotebookList extends Component {
     const { query } = this.props;
     const { location, notebooks } = this.props;
     const notebook = notebooks[index];
-    const active = query.notebookId && ((+query.notebookId) === notebook.id);
+    const active = query.notebook && ((+query.notebook) === notebook.id);
 
     return (
       <NotebookListItem key={key} className={active ? 'active' : null}     to={{
         pathname: location.pathname,
-        search: `?notebookId=${notebook.id}`
+        search: `?notebook=${notebook.id}`
       }}>
         {notebook.name}
       </NotebookListItem>

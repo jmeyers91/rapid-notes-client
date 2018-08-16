@@ -2,7 +2,7 @@ import 'codemirror/lib/codemirror.css';
 import 'codemirror/mode/gfm/gfm';
 import 'codemirror/mode/javascript/javascript';
 import React, { Component } from 'react';
-import { action, computed } from 'mobx';
+import { observable, action, computed } from 'mobx';
 import { observer, inject } from 'mobx-react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
@@ -22,13 +22,8 @@ export default class EditNoteForm extends Component {
     lineWrapping: true,
   };
 
-  handleContentRef = contentRef => {
-    this.contentRef = contentRef
-  };
-
-  handleTitleRef = titleRef => {
-    this.titleRef = titleRef;
-  };
+  @observable stagedTitle = '';
+  @observable stagedContent = '';
 
   @computed get loadingContent() {
     return this.props.note.content == null;
@@ -40,10 +35,21 @@ export default class EditNoteForm extends Component {
     this.debouncedSave = debounce(this.save, 500, {maxWait: 3000});
   }
 
+  handleContentRef = contentRef => {
+    this.contentRef = contentRef
+  };
+
+  handleTitleRef = titleRef => {
+    this.titleRef = titleRef;
+  };
+
   async componentDidMount() {
     const { note } = this.props;
     if(!note.contentLoaded) {
       await this.loadNoteContent();
+    } else {
+      this.stagedTitle = note.title;
+      this.stagedContent = note.savedContent;
     }
 
     const { contentRef, titleRef } = this;
@@ -59,35 +65,30 @@ export default class EditNoteForm extends Component {
     }
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps) {
     const { note } = this.props;
     if(!note.contentLoaded) {
       this.loadNoteContent();
+    } else if(prevProps.note.id !== note.id) {
+      this.stagedTitle = note.title;
+      this.stagedContent = note.savedContent;
     }
-  }
-
-  @action
-  async loadNoteContent() {
-    const { note } = this.props;
-    await note.fetchContent();
   }
 
   @action.bound
   handleContentChange(editor, data, value) {
-    const { note } = this.props;
-    note.updateContent(value);
+    this.stagedContent = value;
     this.debouncedSave();
   }
 
   @action.bound
   handleTitleChange(event) {
-    const { note } = this.props;
-    note.set({title: event.target.value});
+    this.stagedTitle = event.target.value;
     this.debouncedSave();
   }
 
   @action.bound
-  async handleDeleteClick(event) {
+  async handleDeleteClick() {
     const { value : deleteConfirmed } = await swal({
       title: 'Are you sure?',
       text: 'This cannot be undone.',
@@ -104,22 +105,32 @@ export default class EditNoteForm extends Component {
     await store.deleteNote(note);
   }
 
-  async save() {
-    await this.props.note.save();
+  @action
+  async loadNoteContent() {
+    const { note } = this.props;
+    this.stagedTitle = note.title;
+    await note.fetchContent();
+    this.stagedContent = note.content;
   }
 
-  componentWillUnmount() {
-    this.save();
+  @action
+  save() {
+    const { note } = this.props;
+    note.set({
+      title: this.stagedTitle
+    });
+    note.setContent(this.stagedContent);
+    note.save();
   }
 
   render() {
     const { note } = this.props;
+    const { stagedTitle, stagedContent } = this;
 
     return (
       <Root>
         <Header>
-          <TitleInput value={note.title} onChange={this.handleTitleChange} innerRef={this.handleTitleRef}/>
-
+          <TitleInput value={stagedTitle} onChange={this.handleTitleChange} innerRef={this.handleTitleRef}/>
           <DeleteButton color="#C00" onClick={this.handleDeleteClick}>
             DELETE
           </DeleteButton>
@@ -131,7 +142,7 @@ export default class EditNoteForm extends Component {
           {note.contentLoaded && 
             <ContentInput
               innerRef={this.handleContentRef}
-              value={note.content}
+              value={stagedContent}
               options={this.codeMirrorOptions}
               onBeforeChange={this.handleContentChange}
             />

@@ -4,12 +4,14 @@ import { action } from 'mobx';
 import { observer, inject } from 'mobx-react';
 import styled from 'styled-components';
 import { Link, withRouter } from 'react-router-dom';
+import { Highlight } from 'react-fast-highlight';
 import ReactMarkdown from 'react-markdown';
+import highlightWorker from '../highlight.workerjs';
 import Column from './Column.component';
 import Row from './Row.component';
+import SpinnerFill from './SpinnerFill.component';
 import BlockButton from './BlockButton.component';
-import { Highlight } from 'react-fast-highlight';
-import highlightWorker from '../highlight.workerjs';
+import { fadeIn } from '../animations';
 
 @withRouter
 @inject('store')
@@ -62,9 +64,12 @@ export default class RenderedNote extends Component {
           <Title onDoubleClick={this.handleTitleClick}>{note.title}</Title>
           <EditButton to={note.routes.edit}>EDIT</EditButton>
         </Header>
-        <Content onDoubleClick={this.handleContentClick}>
-          <MarkdownRenderer source={note.content}/>
-        </Content>
+        {note.contentLoaded
+          ? <Content onDoubleClick={this.handleContentClick}>
+              <MarkdownRenderer source={note.content}/>
+            </Content>
+          : <SpinnerFill/>
+        }
       </Root>
     );
   }
@@ -119,6 +124,7 @@ const Content = Column.extend`
   overflow: auto;
   flex: 1 1 auto;
   padding: 34px;
+  animation: ${fadeIn} 0.1s linear 1;
 
   > div > *:first-child {
     margin-top: 0;

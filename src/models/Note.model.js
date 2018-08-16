@@ -1,5 +1,4 @@
 import { types, getRoot } from 'mobx-state-tree';
-import createTextDiff from 'textdiff-create';
 import Notebook from './Notebook.model';
 import User from './User.model';
 import DiffMatchPatch from 'diff-match-patch';
@@ -12,6 +11,7 @@ export default types.late(() =>
   types.model('Note', {
     id: types.identifierNumber,
     title: types.string,
+    revision: types.number,
     createdAt: types.Date,
     savedContent: types.maybe(types.string),
     content: types.maybe(types.string),
@@ -69,11 +69,15 @@ export default types.late(() =>
       if(!axios) return; // don't save detached notes
 
       try {
-        self.set({saving: true});
+        self.set({
+          saving: true,
+          revision: self.revision + 1
+        });
+        console.log('new revision', self.revision)
         await axios.post(`/note/${self.id}`, {
           title: self.title,
           contentPatch: self.contentPatch,
-          content: self.content
+          revision: self.revision,
         });
         self.set({savedContent: self.content});
       } finally {
@@ -85,18 +89,16 @@ export default types.late(() =>
       saveQueue = saveQueue
         .then(() => self.forceSave())
         .catch(error => console.log('Failed to save', error));
-      
-        return saveQueue;
+      return saveQueue;
     },
 
     async fetchContent() {
       const response = await self.axios.get(`/note/${self.id}/content`);
       const { content } = response.data;
-      console.log({content});
       self.set({ content, savedContent: content });
     },
 
-    updateContent(newContent) {
+    setContent(newContent) {
       self.content = newContent || '';
     },
 

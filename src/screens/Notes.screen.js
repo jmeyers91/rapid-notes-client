@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import { observable, action, computed } from 'mobx';
 import { observer, inject } from 'mobx-react';
 import { Switch, Route, Redirect, withRouter } from 'react-router-dom';
-import debounce from 'lodash/debounce';
 import queryString from 'query-string';
 import Screen from '../components/Screen.component';
 import NoteList from '../components/NoteList.component';
@@ -28,7 +27,7 @@ export default class Notes extends Component {
 
   @computed get notebook() {
     const { store, query } = this.props;
-    const notebookId = +query.notebookId;
+    const notebookId = +query.notebook;
     return notebookId
       ? store.notebooks.find(notebook => notebook.id === notebookId)
       : null;

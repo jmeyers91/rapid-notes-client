@@ -7,7 +7,7 @@ import { books as ic_books } from 'react-icons-kit/icomoon/books';
 import Column from './Column.component';
 import BlockButton from './BlockButton.component';
 
-export const sideBarWidth = 40;
+export const sideBarWidth = 60;
 
 export default withRouter(function SideBar(props) {
   return (
