@@ -1,112 +1,111 @@
-import { types, getRoot } from 'mobx-state-tree';
-import Notebook from './Notebook.model';
-import User from './User.model';
+import Model from '@simplej/mobx-model';
+import { observable, computed, action } from 'mobx';
 import DiffMatchPatch from 'diff-match-patch';
+import User from './User.model';
 
 const diffMatchPatch = new DiffMatchPatch();
-
 let saveQueue = Promise.resolve();
 
-export default types.late(() => 
-  types.model('Note', {
-    id: types.identifierNumber,
-    title: types.string,
-    revision: types.number,
-    createdAt: types.Date,
-    savedContent: types.maybe(types.string),
-    content: types.maybe(types.string),
-    updatedAt: types.maybe(types.Date),
-    notebookId: types.maybeNull(types.reference(Notebook)),
-    authorId: types.reference(User),
-    saving: false,
-    deleted: false,
-  })
-  .views(self => ({
-    get author() {
-      return self.authorId;
-    },
+export default class Note extends Model {
+  @observable saving = false;
+  @observable deleted = false;
 
-    get axios() {
-      const root = getRoot(self);
-      if(root === self) return null;
-      return root.axios;
-    },
+  static get schema() {
+    return {
+      id: Number,
+      title: String,
+      revision: Number,
+      createdAt: Date,
+      savedContent: String,
+      content: String,
+      updatedAt: Date,
+      notebookId: Number,
+      authorId: Number,
+      author: User,
+    };
+  }
 
-    get routes() {
-      const base = `/note/${self.id}`;
-      return {
-        view: base,
-        edit: `${base}/edit`
-      };
-    },
+  @computed get author() {
+    return this.authorId;
+  }
 
-    get contentLoaded() {
-      return self.content != null;
-    },
+  @computed get axios() {
+    return this.store.axios;
+  }
 
-    get contentPatch() {
-      const { content, savedContent } = this;
-      if(content === savedContent || content == null || savedContent == null) return null;
-      
-      return createContentPatch(savedContent, content);
-    },
+  @computed get routes() {
+    const base = `/note/${this.id}`;
+    return {
+      view: base,
+      edit: `${base}/edit`
+    };
+  }
 
-    get lowercaseTitle() {
-      return self.title.toLowerCase();
-    },
+  @computed get contentLoaded() {
+    return this.content != null;
+  }
 
-    get notebook() {
-      return self.notebookId;
+  @computed get contentPatch() {
+    const { content, savedContent } = this;
+    if(content === savedContent || content == null || savedContent == null) return null;
+    
+    return createContentPatch(savedContent, content);
+  }
+
+  @computed get lowercaseTitle() {
+    return this.title.toLowerCase();
+  }
+
+  @computed get notebook() {
+    return this.notebookId;
+  }
+
+  @action set(fields) {
+    Object.assign(this, fields);
+  }
+
+  @action async forceSave() {
+    const { axios } = this;
+
+    try {
+      this.set({
+        saving: true,
+        revision: this.revision + 1
+      });
+      await axios.post(`/note/${this.id}`, {
+        title: this.title,
+        contentPatch: this.contentPatch,
+        revision: this.revision,
+      });
+      this.set({savedContent: this.content});
+    } finally {
+      this.set({saving: false});
     }
-  }))
-  .actions(self => ({
-    set(props) {
-      Object.assign(self, props);
-    },
+  }
 
-    async forceSave() {
-      const { axios } = self;
-      if(!axios) return; // don't save detached notes
+  @action save() {
+    saveQueue = saveQueue
+      .then(() => {
+        this.forceSave()
+      })
+      .catch(error => console.log('Failed to save', error));
+    return saveQueue;
+  }
 
-      try {
-        self.set({
-          saving: true,
-          revision: self.revision + 1
-        });
-        console.log('new revision', self.revision)
-        await axios.post(`/note/${self.id}`, {
-          title: self.title,
-          contentPatch: self.contentPatch,
-          revision: self.revision,
-        });
-        self.set({savedContent: self.content});
-      } finally {
-        self.set({saving: false});
-      }
-    },
+  @action async fetchContent() {
+    const response = await this.axios.get(`/note/${this.id}/content`);
+    const { content } = response.data;
+    this.set({ content, savedContent: content });
+  }
 
-    save() {
-      saveQueue = saveQueue
-        .then(() => self.forceSave())
-        .catch(error => console.log('Failed to save', error));
-      return saveQueue;
-    },
+  @action setContent(newContent) {
+    this.content = newContent || '';
+  }
 
-    async fetchContent() {
-      const response = await self.axios.get(`/note/${self.id}/content`);
-      const { content } = response.data;
-      self.set({ content, savedContent: content });
-    },
-
-    setContent(newContent) {
-      self.content = newContent || '';
-    },
-
-    matchesSearch(search) {
-      return self.lowercaseTitle.includes(search);
-    },
-  }))
-);
+  matchesSearch(search) {
+    return this.lowercaseTitle.includes(search);
+  }
+}
 
 function createContentPatch(oldText, newText) {
   const diffs = diffMatchPatch.diff_main(oldText, newText);

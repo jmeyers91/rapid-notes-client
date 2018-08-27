@@ -27,10 +27,9 @@ export default class Notes extends Component {
 
   @computed get notebook() {
     const { store, query } = this.props;
+    if(!query.notebook) return null;
     const notebookId = +query.notebook;
-    return notebookId
-      ? store.notebooks.find(notebook => notebook.id === notebookId)
-      : null;
+    return store.getNotebookById(notebookId);
   }
 
   @computed get searchedNotes() {
@@ -40,7 +39,7 @@ export default class Notes extends Component {
 
     return (notebook || (normalizedSearchText && normalizedSearchText.length))
       ? notes.filter(note => {
-        if(notebook && notebook !== note.notebook) {
+        if(notebook && notebook.id !== note.notebookId) {
           return false;
         }
         return note.matchesSearch(normalizedSearchText);

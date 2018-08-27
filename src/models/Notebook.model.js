@@ -1,12 +1,15 @@
-import { types } from 'mobx-state-tree';
+import Model from '@simplej/mobx-model';
 import User from './User.model';
 
-export default types.late(() =>
-  types.model('Notebook', {
-    id: types.identifierNumber,
-    name: types.string,
-    ownerId: types.reference(User),
-    createdAt: types.Date,
-    updatedAt: types.maybeNull(types.Date),
-  })
-);
+export default class Notebook extends Model {
+  static get schema() {
+    return {
+      id: Number,
+      name: String,
+      ownerId: Number,
+      owner: User,
+      createdAt: Date,
+      updatedAt: Date,
+    };
+  }
+}

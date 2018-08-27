@@ -4,6 +4,7 @@
   "private": true,
   "proxy": "http://localhost:9090",
   "dependencies": {
+    "@simplej/mobx-model": "^1.0.2",
     "autoprefixer": "7.1.6",
     "axios": "^0.18.0",
     "babel-core": "6.26.0",
@@ -34,7 +35,6 @@
     "lodash": "^4.17.10",
     "mobx": "^5.0.3",
     "mobx-react": "^5.2.5",
-    "mobx-state-tree": "^3.1.1",
     "object-assign": "4.1.1",
     "postcss-flexbugs-fixes": "3.2.0",
     "postcss-loader": "2.0.8",

@@ -1,95 +1,116 @@
-import { types, destroy } from 'mobx-state-tree';
+import { observable, computed, action } from 'mobx';
 import Axios from 'axios';
 import config from '../config';
 import User from './User.model';
 import Note from './Note.model';
 import Notebook from './Notebook.model';
 
-export default types
-  .model('Store', {
-    loadingInitial: true,
-    authToken: types.maybeNull(types.string),
-    user: types.maybe(User),
-    notes: types.maybe(types.array(Note)),
-    notebooks: types.maybe(types.array(Notebook)),
-  })
-  .views(self => ({
-    get loggedIn() {
-      return !!(self.authToken && self.user);
-    },
+export default class Store {
+  @observable loadingInitial = true;
+  @observable user = null;
+  @observable notes = null;
+  @observable notebooks = null;
+  @observable authToken = localStorage.getItem(config.authTokenKey);
 
-    get axios() {
-      const { authToken } = self;
-      const baseURL = '/api';
-      const headers = {'Content-Type': 'application/json'};
-      if(authToken) headers.Authorization = authToken;
-      
-      return Axios.create({ baseURL, headers });
-    },
-  }))
-  .actions(self => ({
-    async afterCreate() {
-      if (self.authToken && !self.user) {
-        await self.fetchUser();
-      }
-      self.set({loadingInitial: false});
-    },
+  @computed get loggedIn() {
+    return !!(this.authToken && this.user);
+  }
 
-    set(fields) {
-      Object.assign(self, fields);
-    },
+  @computed get axios() {
+    const { authToken } = this;
+    const baseURL = '/api';
+    const headers = {'Content-Type': 'application/json'};
+    if(authToken) headers.Authorization = authToken;
+    
+    return Axios.create({ baseURL, headers });
+  }
 
-    async login({ username, password, remember }) {
-      const response = await self.axios.post('/login', {username, password});
-      const { authToken } = response.data;
-      self.set({ authToken });
-      if(remember) {
-        localStorage.setItem(config.authTokenKey, authToken);
-      }
-      await self.fetchUser();
-    },
+  constructor() {
+    this.afterCreate();
+  }
 
-    async logout() {
-      localStorage.removeItem(config.authTokenKey);
-      self.set({
-        authToken: null,
-        user: null,
-        notes: null
-      });
-    },
+  @action.bound
+  async afterCreate() {
+    if (this.authToken && !this.user) {
+      await this.fetchUser();
+    }
+    this.set({loadingInitial: false});
+  }
 
-    async fetchUser() {
-      const response = await self.axios.get('/user');
-      const user = response.data.user;
-      const notebooks = response.data.user.notebooks;
-      const notes = response.data.user.notes;
-      self.set({user, notes, notebooks});
-    },
+  @action.bound
+  set(fields) {
+    Object.assign(this, fields);
+  }
 
-    async fetchNotes() {
-      const response = await self.axios.get('/notes');
-      const { notes } = response.data;
-      this.set({notes});
-    },
+  @action.bound
+  async login({ username, password, remember }) {
+    const response = await this.axios.post('/login', {username, password});
+    const { authToken } = response.data;
+    this.set({ authToken });
+    if(remember) {
+      localStorage.setItem(config.authTokenKey, authToken);
+    }
+    await this.fetchUser();
+  }
 
-    async createNote() {
-      const response = await self.axios.post('/note');
-      const note = Note.create(response.data.note);
-      self.addNote(note);
-      return note;
-    },
+  @action.bound
+  logout() {
+    localStorage.removeItem(config.authTokenKey);
+    this.set({
+      authToken: null,
+      user: null,
+      notes: null
+    });
+  }
 
-    async deleteNote(note) {
-      await self.axios.delete(`/note/${note.id}`);
-      self.removeNote(note);
-    },
+  @action.bound
+  async fetchUser() {
+    const response = await this.axios.get('/user');
+    const user = response.data.user;
+    const notebooks = response.data.user.notebooks;
+    const notes = response.data.user.notes;
+    this.set({
+      user: new User(this, user),
+      notes: Note.fromArray(this, notes),
+      notebooks: Notebook.fromArray(this, notebooks),
+    });
+  }
 
-    removeNote(note) {
-      destroy(note);
-    },
+  @action.bound
+  async fetchNotes() {
+    const response = await this.axios.get('/notes');
+    const { notes } = response.data;
+    this.set({
+      notes: Note.fromArray(notes)
+    });
+  }
 
-    addNote(note) {
-      // add to the beginning of the list to maintain creation date sort order
-      self.notes.unshift(note);
-    },
-  }));
+  @action.bound
+  async createNote() {
+    const response = await this.axios.post('/note');
+    const note = new Note(this, response.data.note);
+    this.addNote(note);
+    return note;
+  }
+
+  @action.bound
+  async deleteNote(note) {
+    await this.axios.delete(`/note/${note.id}`);
+    this.removeNote(note);
+  }
+
+  @action.bound
+  removeNote(note) {
+    this.notes.remove(note);
+  }
+
+  @action.bound
+  addNote(note) {
+    // add to the beginning of the list to maintain creation date sort order
+    this.notes.unshift(note);
+  }
+
+  getNotebookById(notebookId) {
+    return this.notebooks.find(notebook => notebook.id === notebookId);
+  }
+}
