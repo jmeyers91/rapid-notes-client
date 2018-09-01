@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import { observable, action, computed } from 'mobx';
 import { observer, inject } from 'mobx-react';
-import { Switch, Route, Redirect, withRouter } from 'react-router-dom';
-import queryString from 'query-string';
+import { Switch, Route, Redirect } from 'react-router-dom';
+import qs from 'query-string';
 import Screen from '../components/Screen.component';
 import NoteList from '../components/NoteList.component';
 import NotebookList from '../components/NotebookList.component';
@@ -12,9 +12,10 @@ import NoteListSearchHeader from '../components/NoteListSearchHeader.component';
 import CreateNoteForm from '../components/CreateNoteForm.component';
 import EditNoteForm from '../components/EditNoteForm.component';
 import RenderedNote from '../components/RenderedNote.component';
+import Drawer from '../components/Drawer.component';
 import withQuery from '../utils/withQuery';
 
-@withRouter
+
 @withQuery
 @inject('store')
 @observer
@@ -50,6 +51,17 @@ export default class Notes extends Component {
   @action.bound
   handleSearchChange(event) {
     this.searchText = event.target.value;
+  }
+
+  @action.bound
+  handleCloseNotebookDrawer() {
+    const { location, history, query } = this.props;
+    const { list, ...newQuery } = query;
+
+    history.push({
+      pathname: location.pathname,
+      search: qs.stringify(newQuery),
+    });
   }
 
   getNoteById(noteId) {
@@ -88,17 +100,6 @@ export default class Notes extends Component {
 
   renderIndex = () => null;
 
-  renderList = () => {
-    const { location } = this.props;
-    const { list } = queryString.parse(location.search);
-
-    if(list === 'notebooks') {
-      return this.renderNotebookList();
-    } else {
-      return this.renderNoteList();
-    }
-  };
-
   renderNotebookList = () => {
     const { notebooks } = this.props.store;
     return (
@@ -123,10 +124,16 @@ export default class Notes extends Component {
   };
 
   render() {
+    const { query } = this.props;
+    const showingNotebookDrawer = query.list === 'notebooks';
+
     return (
       <Root>
         <SideBar/>
-        <ListContainer>{this.renderList()}</ListContainer>
+        <ListContainer>{this.renderNoteList()}</ListContainer>
+        <Drawer open={showingNotebookDrawer} onClickOutside={this.handleCloseNotebookDrawer}>
+          {this.renderNotebookList}
+        </Drawer>
         <RouteContainer>
           <Switch>
             <Route path="/note/new" render={this.renderCreateNote}/>

@@ -77,7 +77,7 @@ export default class EditNoteForm extends Component {
 
   @action.bound
   handleContentChange(editor, data, value) {
-    this.stagedContent = value;
+    this.stagedContent = value.replace(/\t/g, '  ');
     this.debouncedSave();
   }
 

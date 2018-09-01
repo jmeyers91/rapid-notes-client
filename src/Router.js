@@ -7,6 +7,7 @@ import {
   Switch
 } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute.component';
+import SpinnerFill from './components/SpinnerFill.component';
 
 // Insecure screens
 import Login from './screens/Login.screen';
@@ -23,7 +24,10 @@ class InsecureRouter extends Component {
   render() {
     const { loadingInitial, loggedIn } = this.props.store;
   
-    if(loadingInitial) return 'Loading...';
+    if(loadingInitial) {
+      return (<InitialLoadingSpinner/>);
+    }
+
     return (
       <Switch>
         <Route path="/login" component={Login} />
@@ -56,3 +60,8 @@ export default () => (
     <InsecureRouter />
   </HashRouter>
 );
+
+const InitialLoadingSpinner = SpinnerFill.extend`
+  width: 100vw;
+  height: 100vh;
+`;

@@ -1,13 +1,12 @@
 import React, { Component } from 'react';
 import { observer } from 'mobx-react';
-import { Link, withRouter } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import ReactList from 'react-list';
 import Column from './Column.component';
 import Row from './Row.component';
 import withQuery from '../utils/withQuery';
 
-@withRouter
 @withQuery
 @observer
 class NotebookList extends Component {
@@ -23,9 +22,9 @@ class NotebookList extends Component {
     const active = query.notebook && ((+query.notebook) === notebook.id);
 
     return (
-      <NotebookListItem key={key} className={active ? 'active' : null}     to={{
+      <NotebookListItem key={key} className={active ? 'active' : null} to={{
         pathname: location.pathname,
-        search: `?notebook=${notebook.id}`
+        search: `notebook=${notebook.id}`
       }}>
         {notebook.name}
       </NotebookListItem>

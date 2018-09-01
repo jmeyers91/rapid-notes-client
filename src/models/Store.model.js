@@ -6,6 +6,8 @@ import Note from './Note.model';
 import Notebook from './Notebook.model';
 
 export default class Store {
+  constructor() { this.afterCreate(); }
+
   @observable loadingInitial = true;
   @observable user = null;
   @observable notes = null;
@@ -25,11 +27,12 @@ export default class Store {
     return Axios.create({ baseURL, headers });
   }
 
-  constructor() {
-    this.afterCreate();
+  @computed get hasUnsavedChanges() {
+    const { notes } = this;
+    return notes && notes.some(note => note.hasUnsavedChanges);
   }
 
-  @action.bound
+  @action
   async afterCreate() {
     if (this.authToken && !this.user) {
       await this.fetchUser();

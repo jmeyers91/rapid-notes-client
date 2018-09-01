@@ -96,7 +96,7 @@ const markdownRenderers = { code: codeWrapper };
 function codeWrapper({ language, value }) {
   return (
     <Highlight languages={language ? [language] : null} worker={highlightWorker()}>
-      {value}
+      {value.replace(/\t/g, '  ')}
     </Highlight>
   );
 }

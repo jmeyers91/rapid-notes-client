@@ -9,6 +9,14 @@ import Router from './Router';
 
 const store = new Store();
 
+// Add a confirmation prompt if the user tries to leave before changes have been saved
+window.addEventListener('beforeunload', event => {
+  if(store.hasUnsavedChanges) {
+    (event || window.event).returnValue = null;
+    return 'Are you sure you want to leave before your changes have finished saving?';
+  }
+});
+
 if (process.env.NODE_ENV === 'development') global.store = store;
 
 const rootEl = document.getElementById('root');

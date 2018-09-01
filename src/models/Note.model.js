@@ -60,6 +60,11 @@ export default class Note extends Model {
     return this.notebookId;
   }
 
+  @computed get hasUnsavedChanges() {
+    const { saving, savedContent, content } = this;
+    return saving || savedContent !== content;
+  }
+
   @action set(fields) {
     Object.assign(this, fields);
   }
@@ -85,10 +90,9 @@ export default class Note extends Model {
 
   @action save() {
     saveQueue = saveQueue
-      .then(() => {
-        this.forceSave()
-      })
+      .then(() => this.forceSave())
       .catch(error => console.log('Failed to save', error));
+
     return saveQueue;
   }
 
