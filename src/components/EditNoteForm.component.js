@@ -2,21 +2,27 @@ import 'codemirror/lib/codemirror.css';
 import 'codemirror/mode/gfm/gfm';
 import 'codemirror/mode/javascript/javascript';
 import React, { Component } from 'react';
-import { observable, action, computed } from 'mobx';
+import { observable, action, computed, runInAction } from 'mobx';
 import { observer, inject } from 'mobx-react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import swal from 'sweetalert2';
 import { Controlled as CodeMirror } from 'react-codemirror2';
+import { ic_file_upload } from 'react-icons-kit/md/ic_file_upload';
+import { ic_folder } from 'react-icons-kit/md/ic_folder';
+import { Icon } from 'react-icons-kit';
 import debounce from 'lodash/debounce';
 import Column from './Column.component';
 import Row from './Row.component';
 import Input from './Input.component';
 import BlockButton from './BlockButton.component';
+import Drawer from './Drawer.component';
+import FileListItem from './FileListItem.component';
 
 @inject('store')
 @observer
 export default class EditNoteForm extends Component {
+  fileInputRef = React.createRef();
   codeMirrorOptions = {
     mode: 'gfm',
     lineWrapping: true,
@@ -24,6 +30,8 @@ export default class EditNoteForm extends Component {
 
   @observable stagedTitle = '';
   @observable stagedContent = '';
+  @observable attachmentsOpen = false;
+  @observable fileInputKey = 1;
 
   @computed get loadingContent() {
     return this.props.note.content == null;
@@ -67,7 +75,7 @@ export default class EditNoteForm extends Component {
 
   componentDidUpdate(prevProps) {
     const { note } = this.props;
-    if(!note.contentLoaded) {
+    if(!note.contentLoaded && !note.loadingContent) {
       this.loadNoteContent();
     } else if(prevProps.note.id !== note.id) {
       this.stagedTitle = note.title;
@@ -88,6 +96,15 @@ export default class EditNoteForm extends Component {
   }
 
   @action.bound
+  async handleFileInputChange(event) {
+    const { store, note } = this.props;
+    const files = Array.from(event.target.files);
+
+    await store.addNoteAttachments(note, files);
+    this.fileInputKey += 1;
+  }
+
+  @action.bound
   async handleDeleteClick() {
     const { value : deleteConfirmed } = await swal({
       title: 'Are you sure?',
@@ -105,32 +122,75 @@ export default class EditNoteForm extends Component {
     await store.deleteNote(note);
   }
 
+  @action.bound
+  async handleAttachmentsToggle() {
+    this.attachmentsOpen = !this.attachmentsOpen;
+  }
+
+  @action.bound
+  handleUploadClick() {
+    this.fileInputRef.current.click();
+  }
+
   @action
   async loadNoteContent() {
     const { note } = this.props;
     this.stagedTitle = note.title;
     await note.fetchContent();
-    this.stagedContent = note.content;
+    runInAction(() => {
+      this.stagedContent = note.content;
+    });
   }
 
   @action
   save() {
     const { note } = this.props;
-    note.set({
-      title: this.stagedTitle
-    });
+    this.title = this.stagedTitle;
     note.setContent(this.stagedContent);
     note.save();
   }
 
+  renderNoteAttachments = () => {
+    const { note } = this.props;
+    const { attachments } = note;
+    if(!attachments) return null;
+
+    return attachments.map(attachment =>
+      <FileListItem
+        key={attachment.id}
+        file={attachment.file}
+      />
+    );
+  };
+
   render() {
     const { note } = this.props;
-    const { stagedTitle, stagedContent } = this;
+    const {
+      stagedTitle,
+      stagedContent,
+      fileInputRef,
+      attachmentsOpen,
+      fileInputKey,
+    } = this;
 
     return (
       <Root>
+        <Drawer open={attachmentsOpen} side="right" onClickOutside={this.handleAttachmentsToggle}>
+          {this.renderNoteAttachments}
+        </Drawer>
+        <input multiple
+          key={fileInputKey}
+          style={{display: 'none'}}
+          ref={fileInputRef}
+          type="file"
+          onChange={this.handleFileInputChange}
+        />
         <Header>
-          <TitleInput value={stagedTitle} onChange={this.handleTitleChange} innerRef={this.handleTitleRef}/>
+          <TitleInput
+            value={stagedTitle}
+            onChange={this.handleTitleChange}
+            innerRef={this.handleTitleRef}
+          />
           <DeleteButton color="#C00" onClick={this.handleDeleteClick}>
             DELETE
           </DeleteButton>
@@ -139,6 +199,14 @@ export default class EditNoteForm extends Component {
           </ViewButton>
         </Header>
         <ContentContainer>
+          <Toolbar>
+            <ToolbarButton onClick={this.handleUploadClick}>
+              <Icon icon={ic_file_upload} size={25}/>
+            </ToolbarButton>
+            <ToolbarButton onClick={this.handleAttachmentsToggle}>
+              <Icon icon={ic_folder} size={25}/>
+            </ToolbarButton>
+          </Toolbar>
           {note.contentLoaded && 
             <ContentInput
               innerRef={this.handleContentRef}
@@ -155,6 +223,7 @@ export default class EditNoteForm extends Component {
 
 const headerHeight = 50;
 const Root = Column.extend`
+  position: relative;
   height: 100%;
 `;
 
@@ -208,4 +277,24 @@ const ViewButton = BlockButton.withComponent(Link).extend`
 
 const DeleteButton = BlockButton.extend`
   flex-shrink: 0;
+`;
+
+const Toolbar = Row.extend`
+  height: 30px;
+  border-bottom: 2px solid #CCC;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 20px 0 20px;
+`;
+
+const ToolbarButton = Column.extend`
+  width: 30px;
+  height: 100%;
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+
+  & + & {
+    margin-left: 10px;
+  }
 `;

@@ -56,7 +56,7 @@ export default class Notes extends Component {
   @action.bound
   handleCloseNotebookDrawer() {
     const { location, history, query } = this.props;
-    const { list, ...newQuery } = query;
+    const { list, ...newQuery } = query.values;
 
     history.push({
       pathname: location.pathname,
@@ -125,7 +125,7 @@ export default class Notes extends Component {
 
   render() {
     const { query } = this.props;
-    const showingNotebookDrawer = query.list === 'notebooks';
+    const showingNotebookDrawer = query.values.list === 'notebooks';
 
     return (
       <Root>

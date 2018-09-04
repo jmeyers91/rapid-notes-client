@@ -1,15 +1,12 @@
-import { types } from 'mobx-state-tree';
+import Model from '@simplej/mobx-model';
 
-export default types.late(() =>
-  types.model('{{properCase name}}', {
-    id: types.identifierNumber,
-    createdAt: types.Date,
-    updatedAt: types.maybeNull(types.Date),
-  })    
-  .views(self => ({
+export default class {{properCase name}} extends Model {
+  static get schema() {
+    return {
+      id: Number,
+      createdAt: Date,
+      updatedAt: Date,
+    };
+  }
+}
 
-  }))
-  .actions(self => ({
-
-  }))
-);

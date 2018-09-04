@@ -2,6 +2,7 @@ import Model from '@simplej/mobx-model';
 import { observable, computed, action } from 'mobx';
 import DiffMatchPatch from 'diff-match-patch';
 import User from './User.model';
+import NoteAttachment from './NoteAttachment.model';
 
 const diffMatchPatch = new DiffMatchPatch();
 let saveQueue = Promise.resolve();
@@ -9,6 +10,7 @@ let saveQueue = Promise.resolve();
 export default class Note extends Model {
   @observable saving = false;
   @observable deleted = false;
+  @observable loadingContent = false;
 
   static get schema() {
     return {
@@ -22,11 +24,8 @@ export default class Note extends Model {
       notebookId: Number,
       authorId: Number,
       author: User,
+      attachments: [ NoteAttachment ],
     };
-  }
-
-  @computed get author() {
-    return this.authorId;
   }
 
   @computed get axios() {
@@ -97,9 +96,15 @@ export default class Note extends Model {
   }
 
   @action async fetchContent() {
-    const response = await this.axios.get(`/note/${this.id}/content`);
-    const { content } = response.data;
-    this.set({ content, savedContent: content });
+    try {
+      this.loadingContent = true;
+      const response = await this.axios.get(`/note/${this.id}`);
+      const { note } = response.data;
+      this.patch(note);
+      this.savedContent = this.content;
+    } finally {
+      this.loadingContent = false;
+    }
   }
 
   @action setContent(newContent) {

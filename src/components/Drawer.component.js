@@ -13,8 +13,9 @@ class Drawer extends Component {
   }
 
   render() {
-    const { open, children } = this.props;
+    const { side='left', width=300, open, children } = this.props;
     let renderedChildren;
+    let DrawerComponent;
 
     if(typeof children === 'function')  {
       if(open) {
@@ -26,36 +27,76 @@ class Drawer extends Component {
       renderedChildren = children;
     }
 
+    if(side === 'left') DrawerComponent = LeftDrawer;
+    else if(side === 'right') DrawerComponent = RightDrawer;
+    else throw new Error(`Invalid drawer side "${side}"`);
+
     return (
-      <Root {...this.props} onClick={this.handleClick}>
-        <Window open={open}>
-          {renderedChildren}
-        </Window>
-      </Root>
+      <DrawerComponent {...this.props} onClick={this.handleClick} width={width}>
+        {renderedChildren}
+      </DrawerComponent>
     );
   }
+}
+
+function LeftDrawer(props) {
+  const { open, width, children } = props;
+
+  return (
+    <Root {...props}>
+      <LeftWindow open={open} width={width}>
+        {children}
+      </LeftWindow>
+    </Root>
+  );
+}
+
+function RightDrawer(props) {
+  const { open, width, children } = props;
+
+  return (
+    <Root {...props}>
+      <RightWindow open={open} width={width}>
+        {children}
+      </RightWindow>
+    </Root>
+  );
 }
 
 export default styled(Drawer)``;
 
 const Root = styled.div`
-  position: fixed;
+  position: absolute;
   left: 0;
   top: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: ${props => props.open ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0)'};
+  width: 100%;
+  height: 100%;
   transition: background-color 0.2s;
-  pointer-events: ${props => props.open ? 'auto' : 'none'};
   z-index: 900;
+  background-color: ${props => props.open ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0)'};
+  pointer-events: ${props => props.open ? 'auto' : 'none'};
 `;
 
 const Window = Column.extend`
-  width: 250px;
-  max-width: 100vw;
-  height: 100vh;
-  background-color: red;
-  transition: transform 0.2s;
-  transform: translate(${props => (props.open ? '0' : '-250px')}, 0);
-  pointer-events: ${props => (props.open ? 'auto' : 'none')};
+  pointer-events: ${props => props.open ? 'auto' : 'none'};
+  width: ${props => props.width}px;
+  position: absolute;
+  top: 0;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  background-color: white;
+  overflow: auto;
+`;
+
+const LeftWindow = Window.extend`
+  left: ${props => props.open ? '0' : ('-' + props.width)}px;
+  transition: left 0.2s;
+  box-shadow: 3px 0px 10px rgba(0,0,0,0.15);
+`;
+
+const RightWindow = Window.extend`
+  right: ${props => props.open ? '0' : ('-' + props.width)}px;
+  transition: right 0.2s;
+  box-shadow: -3px 0px 10px rgba(0,0,0,0.15);
 `;

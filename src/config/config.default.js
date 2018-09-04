@@ -4,4 +4,5 @@ export default {
   defaultUsername: '',
   defaultPassword: '',
   rememberAuthToken: true,
+  server: 'http://localhost:9090'
 };

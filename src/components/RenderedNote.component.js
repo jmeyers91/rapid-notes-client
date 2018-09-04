@@ -26,7 +26,7 @@ export default class RenderedNote extends Component {
 
   componentDidUpdate() {
     const { note } = this.props;
-    if(!note.contentLoaded) {
+    if(!note.contentLoaded && !note.loadingContent) {
       this.loadNoteContent();
     }
   }
