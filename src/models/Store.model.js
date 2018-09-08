@@ -22,7 +22,7 @@ export default class Store {
   @computed get axios() {
     const { authToken } = this;
     const baseURL = '/api';
-    const headers = {'Content-Type': 'application/json'};
+    const headers = { 'Content-Type': 'application/json' };
     if(authToken) headers.Authorization = authToken;
     
     return Axios.create({ baseURL, headers });
@@ -74,9 +74,9 @@ export default class Store {
     const notebooks = response.data.user.notebooks;
     const notes = response.data.user.notes;
     this.set({
-      user: new User(this, user),
-      notes: Note.fromArray(this, notes),
-      notebooks: Notebook.fromArray(this, notebooks),
+      user: new User(user, this),
+      notes: Note.fromArray(notes, this),
+      notebooks: Notebook.fromArray(notebooks, this),
     });
   }
 
@@ -92,7 +92,7 @@ export default class Store {
   @action.bound
   async createNote() {
     const response = await this.axios.post('/note');
-    const note = new Note(this, response.data.note);
+    const note = new Note(response.data.note, this);
     this.addNote(note);
     return note;
   }
@@ -120,7 +120,7 @@ export default class Store {
     const files = await this.uploadFiles(fileObjects);
     const response = await axios.post(`/note/${note.id}/attach`, { files });
     runInAction(() => {
-      note.attachments.push(...NoteAttachment.fromArray(this, response.data.attachments));
+      note.attachments.push(...NoteAttachment.fromArray(response.data.attachments, this));
     });
   }
 
