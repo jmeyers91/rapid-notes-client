@@ -28,8 +28,8 @@ export default class Notes extends Component {
 
   @computed get notebook() {
     const { store, query } = this.props;
-    if(!query.notebook) return null;
-    const notebookId = +query.notebook;
+    if(!query.values.notebook) return null;
+    const notebookId = +query.values.notebook;
     return store.getNotebookById(notebookId);
   }
 
@@ -102,10 +102,11 @@ export default class Notes extends Component {
 
   renderNotebookList = () => {
     const { notebooks } = this.props.store;
+
     return (
       <NotebookList notebooks={notebooks}/>
-    )
-  }
+    );
+  };
 
   renderNoteList = () => {
     const { searchedNotes, searchText } = this;
