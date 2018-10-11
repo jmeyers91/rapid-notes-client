@@ -6,7 +6,6 @@ import styled from 'styled-components';
 import { Link, withRouter } from 'react-router-dom';
 import { Highlight } from 'react-fast-highlight';
 import ReactMarkdown from 'react-markdown';
-import highlightWorker from '../highlight.workerjs';
 import Column from './Column.component';
 import Row from './Row.component';
 import SpinnerFill from './SpinnerFill.component';
@@ -95,7 +94,7 @@ class MarkdownRenderer extends Component {
 const markdownRenderers = { code: codeWrapper };
 function codeWrapper({ language, value }) {
   return (
-    <Highlight languages={language ? [language] : null} worker={highlightWorker()}>
+    <Highlight languages={language ? [language] : null}>
       {value.replace(/\t/g, '  ')}
     </Highlight>
   );
