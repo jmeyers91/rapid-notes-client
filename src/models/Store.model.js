@@ -59,10 +59,13 @@ export default class Store {
 
   @action
   async afterCreate() {
-    if (this.authToken && !this.user) {
-      await this.fetchUser();
+    try {
+      if (this.authToken && !this.user) {
+        await this.fetchUser();
+      }
+    } finally {
+      this.set({loadingInitial: false});
     }
-    this.set({loadingInitial: false});
   }
 
   @action.bound
