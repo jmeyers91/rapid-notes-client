@@ -8,13 +8,13 @@ import NoteList from '../components/NoteList.component';
 import NotebookList from '../components/NotebookList.component';
 import Column from '../components/Column.component';
 import SideBar, { sideBarWidth } from '../components/SideBar.component';
+import Spinner from '../components/Spinner.component';
 import NoteListSearchHeader from '../components/NoteListSearchHeader.component';
 import CreateNoteForm from '../components/CreateNoteForm.component';
 import EditNoteForm from '../components/EditNoteForm.component';
 import RenderedNote from '../components/RenderedNote.component';
 import Drawer from '../components/Drawer.component';
 import withQuery from '../utils/withQuery';
-
 
 @withQuery
 @inject('store')
@@ -125,7 +125,7 @@ export default class Notes extends Component {
   };
 
   render() {
-    const { query } = this.props;
+    const { store, query } = this.props;
     const showingNotebookDrawer = query.values.list === 'notebooks';
 
     return (
@@ -143,6 +143,7 @@ export default class Notes extends Component {
             <Route path="/" render={this.renderIndex}/>
           </Switch>
         </RouteContainer>
+        <SavingSpinner visible={store.saving}/>
       </Root>
     );
   }
@@ -167,6 +168,16 @@ const RouteContainer = Column.extend`
   flex: 1 0 auto;
   height: 100%;
   max-width: calc(100% - ${sideBarWidth + listWidth}px);
+`;
+
+const SavingSpinner = Spinner.extend`
+  position: fixed;
+  right: 5px;
+  bottom: 5px;
+  transform: scale(0.5, 0.5);
+  pointer-events: none;
+  transition: opacity 0.2s;
+  opacity: ${props => props.visible ? 0.7 : 0};
 `;
 
 function MissingNoteRedirect(props) {

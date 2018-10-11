@@ -4,5 +4,6 @@ export default {
   defaultUsername: '',
   defaultPassword: '',
   rememberAuthToken: true,
-  server: 'http://localhost:9090'
+  server: 'http://localhost:9090',
+  globalStore: true,
 };

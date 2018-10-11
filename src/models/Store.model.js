@@ -10,6 +10,7 @@ export default class Store {
   constructor() { this.afterCreate(); }
 
   @observable loadingInitial = true;
+  @observable uploadingFiles = false;
   @observable user = null;
   @observable notes = null;
   @observable notebooks = null;
@@ -23,14 +24,37 @@ export default class Store {
     const { authToken } = this;
     const baseURL = '/api';
     const headers = { 'Content-Type': 'application/json' };
-    if(authToken) headers.Authorization = authToken;
+    const options = { baseURL, headers };
+
+    if(authToken) {
+      options.headers.Authorization = authToken;
+    }
+
+    const axiosInstance = Axios.create(options);
+    if(authToken) {
+      // Logout automatically if a 401 response is received
+      axiosInstance.interceptors.response.use(
+        response => response,
+        error => {
+          if(error.response && error.response.status === 401) {
+            this.logout();
+          }
+          throw error;
+        }
+      );
+    }
     
-    return Axios.create({ baseURL, headers });
+    return axiosInstance;
   }
 
   @computed get hasUnsavedChanges() {
     const { notes } = this;
     return notes && notes.some(note => note.hasUnsavedChanges);
+  }
+
+  @computed get saving() {
+    const { uploadingFiles, hasUnsavedChanges } = this;
+    return uploadingFiles || hasUnsavedChanges;
   }
 
   @action
@@ -64,6 +88,7 @@ export default class Store {
       authToken: null,
       user: null,
       notes: null,
+      loadingInitial: false,
     });
   }
 
@@ -125,15 +150,20 @@ export default class Store {
   }
 
   async uploadFiles(fileObjects) {
-    const { axios } = this;
-    const data = fileObjects.reduce((data, file, i) => {
-      data.append(`file${i}`, file);
-      return data;
-    }, new FormData());
-    const response = await axios.post('/upload', data);
-    const { files } = response.data;
+    try {
+      this.uploadingFiles = true;
+      const { axios } = this;
+      const data = fileObjects.reduce((data, file, i) => {
+        data.append(`file${i}`, file);
+        return data;
+      }, new FormData());
+      const response = await axios.post('/upload', data);
+      const { files } = response.data;
 
-    return files;
+      return files;
+    } finally {
+      this.uploadingFiles = false;
+    }
   }
 
   getNotebookById(notebookId) {

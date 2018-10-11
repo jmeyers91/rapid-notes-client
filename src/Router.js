@@ -55,7 +55,7 @@ class SecureRouter extends Component {
   }
 }
 
-export default () => (
+export default observer(() =>
   <HashRouter>
     <InsecureRouter />
   </HashRouter>

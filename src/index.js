@@ -6,6 +6,7 @@ import ReactDOM from 'react-dom';
 import { Provider as StoreProvider } from 'mobx-react';
 import Store from './models/Store.model';
 import Router from './Router';
+import config from './config';
 
 const store = new Store();
 
@@ -17,7 +18,7 @@ window.addEventListener('beforeunload', event => {
   }
 });
 
-if (process.env.NODE_ENV === 'development') global.store = store;
+if (config.globalStore) global.store = store;
 
 const rootEl = document.getElementById('root');
 const app = (
